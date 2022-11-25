@@ -1,0 +1,41 @@
+import cv2
+import mediapipe as mp
+mp_face_detection = mp.solutions.face_detection
+def face_extractor(image):
+    image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+    image.flags.writeable = False
+    results = face_detection.process(image)
+    image.flags.writeable = True
+    image = cv2.cvtColor(image, cv2.COLOR_RGB2BGR)
+    cv2.imshow('MediaPipe Face Detectsion', image)
+    if results.detections:
+        for detection in results.detections:
+            bb = detection.location_data.relative_bounding_box
+            x = int(bb.xmin * image.shape[1])
+            y = int(bb.ymin * image.shape[0])
+            h = int(bb.height * image.shape[0])
+            w = int(bb.width * image.shape[1])
+        cropped_face = image[y:y + h, x:x + w]
+    return  cropped_face
+count = 0
+cap = cv2.VideoCapture(0)
+with mp_face_detection.FaceDetection(
+        model_selection=0, min_detection_confidence=0.5) as face_detection:
+    while cap.isOpened():
+        success, image = cap.read()
+        if not success:
+            print("웹캠이 인식안됩니다.")
+            continue
+        if face_extractor(image) is not None:
+            count +=1
+            face = cv2.resize(face_extractor(image),(200,200))
+            file_name_path = 'faces/user'+str(count)+'.jpg'
+            cv2.imwrite(file_name_path,face)
+            cv2.putText(face,str(count),(50,50),cv2.FONT_HERSHEY_COMPLEX,1,(0,255,0),2)
+            cv2.imshow('MediaPipe Face Detection',face)
+        if cv2.waitKey(1)==13 or count==100:
+            break
+cap.release()
+cv2.destroyAllWindows()
+print('Colleting Samples Complete!!!')
+
